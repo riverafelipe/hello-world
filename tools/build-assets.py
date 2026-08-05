@@ -239,6 +239,27 @@ def cursor(path, out_name, ink=(234, 139, 69), width=420):
           f"{os.path.getsize(dest)/1024:6.1f} KB  (ratio {im.width/im.height:.4f})")
 
 
+def basket_pair(front_src, back_src, width=1200):
+    """The two halves are hand-separated and already registered to each
+    other, so they must be cropped and scaled identically or the front
+    wires will drift off the back ones."""
+    ims = {k: Image.open(p).convert("RGBA") for k, p in
+           (("front", front_src), ("back", back_src))}
+    boxes = [im.getbbox() for im in ims.values()]
+    box = (min(b[0] for b in boxes), min(b[1] for b in boxes),
+           max(b[2] for b in boxes), max(b[3] for b in boxes))
+    print(f"  shared crop {box}")
+    for key, im in ims.items():
+        im = im.crop(box)
+        im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
+        im = recolour_caps(im)
+        name = f"basket-{key}.png"
+        dest = os.path.join(OUT, name)
+        im.save(dest, "PNG", optimize=True)
+        print(f"  -> {name:22s} {im.width}x{im.height}  "
+              f"{os.path.getsize(dest)/1024:6.1f} KB  (ratio {im.width/im.height:.4f})")
+
+
 print("\nbasket + cursor:")
-basket(f"{UP}/shopping-basket.png", "shopping-basket.png")
+basket_pair(f"{UP}/basket-front.png", f"{UP}/basket-back.png")
 cursor(f"{UP}/hand-cursor.png", "hand-cursor.png")
