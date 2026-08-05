@@ -31,6 +31,7 @@ FILES = {
     "cursor":   "hand-cursor.png",
     "atomBlack": "atomizer-black.png",
     "atomGold":  "atomizer-gold.png",
+    "atomNavy":  "atomizer-navy.png",
     "atomPink":  "atomizer-pink.png",
     "atomRed":   "atomizer-red.png",
 }
@@ -42,8 +43,15 @@ def png_size(raw):
     return struct.unpack(">II", raw[16:24])
 
 
+page_src = open(PAGE, encoding="utf-8").read()
+shell = re.sub(r'<script id="asset-data".*?</script>', "", page_src, flags=re.S)
+USED = {k: v for k, v in FILES.items() if re.search(r"\b%s\b" % re.escape(k), shell)}
+skipped = sorted(set(FILES) - set(USED))
+if skipped:
+    print(f"  skipping unreferenced: {', '.join(skipped)}")
+
 data = {}
-for key, name in FILES.items():
+for key, name in USED.items():
     path = os.path.join(ASSETS, name)
     if not os.path.exists(path):
         raise SystemExit(f"missing asset: {path}")
@@ -101,5 +109,5 @@ if fn != 1:
     raise SystemExit("could not find the poppins marker block in index.html")
 
 open(PAGE, "w", encoding="utf-8").write(new)
-print(f"embedded {len(FILES)} assets + {len(FONTS)} Poppins faces "
+print(f"embedded {len(USED)} assets + {len(FONTS)} Poppins faces "
       f"({font_bytes/1024:.1f} KB) -> page is now {len(new)/1024:.0f} KB")

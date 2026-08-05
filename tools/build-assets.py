@@ -346,5 +346,5 @@ def cutout_atomizer(path, out_name, t=22, min_run=8, margin=40,
 
 
 print("\natomizers:")
-for name in ("black", "gold", "pink", "red"):
+for name in ("black", "gold", "navy", "pink", "red"):
     cutout_atomizer(f"{UP}/atomizer-{name}.png", f"atomizer-{name}.png")
