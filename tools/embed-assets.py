@@ -17,7 +17,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "assets")
-PAGE = os.path.join(ROOT, "index.html")
+# target page: default index.html (v1), or pass one as argv[1]
+PAGE = os.path.join(ROOT, sys.argv[1] if len(sys.argv) > 1 else "index.html")
 
 FILES = {
     "logo":     "decantx-logo.png",
@@ -28,6 +29,10 @@ FILES = {
     "basketFront": "basket-front.png",
     "basketBack":  "basket-back.png",
     "cursor":   "hand-cursor.png",
+    "atomBlack": "atomizer-black.png",
+    "atomGold":  "atomizer-gold.png",
+    "atomPink":  "atomizer-pink.png",
+    "atomRed":   "atomizer-red.png",
 }
 
 

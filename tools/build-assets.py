@@ -263,3 +263,88 @@ def basket_pair(front_src, back_src, width=1200):
 print("\nbasket + cursor:")
 basket_pair(f"{UP}/basket-front.png", f"{UP}/basket-back.png")
 cursor(f"{UP}/hand-cursor.png", "hand-cursor.png")
+
+
+
+def cutout_atomizer(path, out_name, t=22, min_run=8, margin=40,
+                    max_side=460, feather=0.8):
+    """Key an atomizer off the studio seamless.
+
+    A global flood fill can't do these: the pink one's edge stands only ~28
+    off the background, which itself drifts ~25 across the frame, so any
+    single threshold either eats the bottle or keeps the backdrop. Instead
+    the background is estimated per row from the outer margins, and because
+    an atomizer is a convex cylinder, each row is filled between its
+    outermost solid runs. That also drops the soft base shadow, which never
+    forms a run.
+    """
+    im = Image.open(path).convert("RGB")
+    w, h = im.size
+    px = im.load()
+    alpha = Image.new("L", (w, h), 0)
+    ap = alpha.load()
+    spans = {}
+
+    def mid(vals):
+        vals = sorted(vals)
+        return vals[len(vals) // 2]
+
+    for y in range(h):
+        edge = [px[x, y] for x in range(margin)] + [px[x, y] for x in range(w - margin, w)]
+        br, bg_, bb = mid([e[0] for e in edge]), mid([e[1] for e in edge]), mid([e[2] for e in edge])
+        lo = hi = None
+        run = 0
+        for x in range(w):
+            r, g, b = px[x, y]
+            if abs(r - br) + abs(g - bg_) + abs(b - bb) > t:
+                run += 1
+                if run >= min_run:
+                    if lo is None:
+                        lo = x - run + 1
+                    hi = x
+            else:
+                run = 0
+        spans[y] = (lo, hi) if (lo is not None and hi is not None and hi > lo) else None
+
+    rows = [y for y, sp in spans.items() if sp]
+    if not rows:
+        raise SystemExit(f"no subject found in {path}")
+
+    # An atomizer is a constant-width cylinder, so the body's own x-range is
+    # the truth. The surface highlight at the base spills outside it.
+    core = rows[len(rows) // 4: len(rows) * 3 // 4]
+    los = sorted(spans[y][0] for y in core)
+    his = sorted(spans[y][1] for y in core)
+    bl, bh = los[len(los) // 2], his[len(his) // 2]
+    cx = (bl + bh) // 2
+
+    # the real base is the last row whose centre is still solid bottle
+    base = max(y for y in rows
+               if abs(px[cx, y][0] - mid([px[x, y][0] for x in range(margin)])) +
+                  abs(px[cx, y][1] - mid([px[x, y][1] for x in range(margin)])) +
+                  abs(px[cx, y][2] - mid([px[x, y][2] for x in range(margin)])) > 60)
+
+    for y in rows:
+        if y > base:
+            continue
+        lo, hi = spans[y]
+        for x in range(max(lo, bl - 2), min(hi, bh + 2) + 1):
+            ap[x, y] = 255
+
+    if feather:
+        alpha = alpha.filter(ImageFilter.GaussianBlur(feather))
+    im = im.convert("RGBA")
+    im.putalpha(alpha)
+    im = im.crop(im.getbbox())
+    if max(im.size) > max_side:
+        sc = max_side / max(im.size)
+        im = im.resize((round(im.width * sc), round(im.height * sc)), Image.LANCZOS)
+    dest = os.path.join(OUT, out_name)
+    im.save(dest, "PNG", optimize=True)
+    print(f"  -> {out_name:22s} {im.width}x{im.height}  "
+          f"{os.path.getsize(dest)/1024:6.1f} KB  (ratio {im.width/im.height:.4f})")
+
+
+print("\natomizers:")
+for name in ("black", "gold", "pink", "red"):
+    cutout_atomizer(f"{UP}/atomizer-{name}.png", f"atomizer-{name}.png")
