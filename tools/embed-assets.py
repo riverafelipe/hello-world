@@ -25,6 +25,8 @@ FILES = {
     "gaultier": "jpg-le-beau-le-parfum.png",
     "delina":   "pdm-delina-exclusif.png",
     "baccarat": "mfk-baccarat-rouge-540.png",
+    "basket":   "shopping-basket.png",
+    "cursor":   "hand-cursor.png",
 }
 
 

@@ -182,3 +182,63 @@ cutout(f"{UP}/mfk-baccarat-rouge-540.png",  "mfk-baccarat-rouge-540.png", thresh
 print("\nlogo:")
 logo(f"{UP}/decantx-logo.jpg",
      "decantx-logo.png", (0, 0, 0))
+
+
+def recolour_caps(im, target=(221, 140, 69)):
+    """The handle pivots ship in magenta; bring them into the orange family
+    at their original brightness so they stop reading as a mistake."""
+    px = im.load()
+    w, h = im.size
+    tl = 0.299 * target[0] + 0.587 * target[1] + 0.114 * target[2]
+    n = 0
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a > 20 and b > g + 14 and r > g + 8:
+                lum = 0.299 * r + 0.587 * g + 0.114 * b
+                k = lum / tl
+                px[x, y] = (min(255, int(target[0] * k)),
+                            min(255, int(target[1] * k)),
+                            min(255, int(target[2] * k)), a)
+                n += 1
+    print(f"  recoloured {n} magenta pixels on the handle pivots")
+    return im
+
+
+def basket(path, out_name, width=1200):
+    im = Image.open(path).convert("RGBA")
+    im = im.crop(im.getbbox())
+    im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
+    im = recolour_caps(im)
+    dest = os.path.join(OUT, out_name)
+    im.save(dest, "PNG", optimize=True)
+    print(f"  -> {out_name:22s} {im.width}x{im.height}  "
+          f"{os.path.getsize(dest)/1024:6.1f} KB  (ratio {im.width/im.height:.4f})")
+
+
+def cursor(path, out_name, ink=(234, 139, 69), width=420):
+    """Repaint the charcoal outline orange, leaving the white fill alone.
+    Blending by darkness keeps the antialiased edge clean."""
+    im = Image.open(path).convert("RGBA")
+    im = im.crop(im.getbbox())
+    im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            lum = 0.299 * r + 0.587 * g + 0.114 * b
+            t = max(0.0, min(1.0, (255 - lum) / (255 - 70)))
+            px[x, y] = (round(255 + (ink[0] - 255) * t),
+                        round(255 + (ink[1] - 255) * t),
+                        round(255 + (ink[2] - 255) * t), a)
+    dest = os.path.join(OUT, out_name)
+    im.save(dest, "PNG", optimize=True)
+    print(f"  -> {out_name:22s} {im.width}x{im.height}  "
+          f"{os.path.getsize(dest)/1024:6.1f} KB  (ratio {im.width/im.height:.4f})")
+
+
+print("\nbasket + cursor:")
+basket(f"{UP}/shopping-basket.png", "shopping-basket.png")
+cursor(f"{UP}/hand-cursor.png", "hand-cursor.png")
