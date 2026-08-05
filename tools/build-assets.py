@@ -181,4 +181,4 @@ cutout(f"{UP}/mfk-baccarat-rouge-540.png",  "mfk-baccarat-rouge-540.png", thresh
 
 print("\nlogo:")
 logo(f"{UP}/decantx-logo.jpg",
-     "decantx-logo.png", (210, 105, 30))
+     "decantx-logo.png", (0, 0, 0))
