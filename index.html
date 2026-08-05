@@ -3,332 +3,285 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DecantX — Fill Your Basket</title>
+<title>DecantX — Payday Essentials</title>
 <style>
   /* ============================================================
-     DecantX — interactive "fill your basket" scene
-     Design tokens. This page deliberately commits to a single
-     warm-orange world (a lit perfume counter), so the palette is
-     fixed rather than theme-reactive — the theme toggle must not
-     wash it out, hence explicit values on both data-theme states.
+     DecantX "Payday Essentials" — a 9:16 social poster.
+     A wire market basket sits over a phone mockup; tapping a tile
+     inside the phone flies that product up into the basket.
+     Orange restatement of the pink reference.
      ============================================================ */
   :root,
   :root[data-theme="dark"],
   :root[data-theme="light"] {
-    --ink:        #2B1607;  /* roasted brown-black, biased toward the accent */
-    --ink-soft:   #6B4A2E;
-    --ground:     #FFF1DE;  /* warm cream ground */
-    --ground-2:   #FFE2BE;
-    --orange:     #FF6A13;  /* the accent, spent here and nowhere else */
-    --orange-deep:#D93E00;
-    --amber:      #FFB03A;
-    --muted:      #B9A08A;  /* warm-biased neutral for the spent state */
-    --glass:      rgba(255, 255, 255, 0.62);
+    --cream:       #FAF3EB;  /* the poster ground */
+    --cream-deep:  #F2E7DA;
+    --tile:        #F1ECE5;  /* product tile fill inside the phone */
+    --orange-pale: #F7CDA8;  /* spent / greyed-out state */
+    --orange-soft: #F0A96E;  /* title, wire highlights */
+    --orange:      #EA8B45;  /* the basket wire */
+    --orange-deep: #D2691E;  /* "ADD TO CART", the one strong note */
+    --ink:         #3A2A1E;
+    --ink-soft:    #8A7563;
 
-    --step--1: clamp(0.68rem, 0.62rem + 0.28vw, 0.8rem);
-    --step-0:  clamp(0.86rem, 0.8rem + 0.3vw, 1rem);
-    --step-1:  clamp(1.1rem, 0.95rem + 0.7vw, 1.5rem);
-    /* the display size answers to viewport height as well as width, so the
-       whole scene keeps fitting on a short laptop screen without scrolling */
-    --step-3:  clamp(1.7rem, 1rem + 2vw + 0.7vh, 3.4rem);
-
-    --display: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    --label:   ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --serif: "Didot", "Bodoni MT", "Playfair Display", "Hoefler Text", Garamond, Georgia, "Times New Roman", serif;
+    --sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 
     color-scheme: only light;
   }
 
   * { box-sizing: border-box; }
-
   html, body { height: 100%; }
 
   body {
     margin: 0;
-    font-family: var(--display);
+    background: var(--cream-deep);
     color: var(--ink);
-    background: var(--ground);
-    overflow-x: hidden;
+    font-family: var(--sans);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
   }
 
-  /* Ambient ground: a low sun behind the counter, plus a faint pixel grid
-     that ties the scene to the 8-bit cursor. */
-  .backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background:
-      radial-gradient(120% 80% at 50% 18%, var(--amber) 0%, rgba(255,176,58,0) 58%),
-      radial-gradient(90% 70% at 50% 108%, var(--orange) 0%, rgba(255,106,19,0) 60%),
-      linear-gradient(180deg, var(--ground) 0%, var(--ground-2) 100%);
+  /* ---------- the poster ---------- */
+  .poster {
+    position: relative;
+    container-type: size;
+    width: min(100vw, 56.25dvh);   /* 9:16 */
+    height: min(177.78vw, 100dvh);
+    background: var(--cream);
+    overflow: hidden;
+    isolation: isolate;
   }
-  .backdrop::after {
-    content: "";
+
+  /* ---------- title ---------- */
+  .title {
+    position: absolute;
+    top: 6.4%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 7.4cqw;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    color: var(--orange-soft);
+    white-space: nowrap;
+  }
+  .title em { font-style: italic; letter-spacing: 0.02em; }
+
+  /* ---------- wire basket ---------- */
+  .basket {
+    position: absolute;
+    left: 50%;
+    top: 15%;
+    width: 76cqw;
+    transform: translateX(-50%);
+    aspect-ratio: 400 / 250;
+    z-index: 3;                    /* over the phone */
+  }
+  .basket > svg {
     position: absolute;
     inset: 0;
-    background-image:
-      linear-gradient(to right, rgba(43,22,7,.055) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(43,22,7,.055) 1px, transparent 1px);
-    background-size: 34px 34px;
-    mask-image: radial-gradient(100% 75% at 50% 40%, #000 30%, transparent 78%);
+    width: 100%;
+    height: 100%;
+    overflow: visible;
   }
+  .basket .wire-back  { z-index: 1; }
+  .basket .well       { z-index: 2; }
+  .basket .wire-front { z-index: 3; pointer-events: none; }
 
-  .stage {
-    position: relative;
-    z-index: 1;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    gap: clamp(0.6rem, 1.6vh, 1.4rem);
-    padding: clamp(0.9rem, 2.2vh, 1.6rem) clamp(1rem, 4vw, 3rem) clamp(1rem, 2.4vh, 1.8rem);
-  }
-
-  /* ---------- masthead ---------- */
-  .masthead {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  /* Placeholder wordmark — swap the whole <a> for <img src="decantx-logo.svg">
-     when the real asset is available. */
-  .wordmark {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.06em;
-    font-size: clamp(1.35rem, 1rem + 1.6vw, 2.2rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
-    color: var(--ink);
-    text-decoration: none;
-    line-height: 1;
-  }
-  .wordmark b { font-weight: 800; }
-  .wordmark .x {
-    color: var(--ground);
-    background: var(--orange);
-    padding: 0.1em 0.26em 0.16em;
-    border-radius: 0.14em;
-    margin-left: 0.12em;
-    box-shadow: 0 3px 0 var(--orange-deep);
-  }
-  .wordmark small {
-    display: block;
-    font-family: var(--label);
-    font-size: var(--step--1);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    margin-left: 0.6em;
-    align-self: center;
-  }
-
-  .counter {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-family: var(--label);
-    font-size: var(--step--1);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--ink);
-    background: var(--glass);
-    border: 2px solid var(--ink);
-    border-radius: 999px;
-    padding: 0.5rem 0.95rem;
-    box-shadow: 0 3px 0 var(--ink);
-  }
-  .counter .n {
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
-    background: var(--orange);
-    color: var(--ground);
-    border-radius: 999px;
-    min-width: 1.9em;
-    text-align: center;
-    padding: 0.1em 0.4em;
-  }
-  .counter.bump { animation: bump 420ms cubic-bezier(.3,1.6,.4,1); }
-  @keyframes bump { 40% { transform: scale(1.12) rotate(-2deg); } }
-
-  /* ---------- hero / basket ---------- */
-  .hero {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(0.6rem, 1.6vh, 1.4rem);
-    text-align: center;
-  }
-
-  .kicker {
-    font-family: var(--label);
-    font-size: var(--step--1);
-    letter-spacing: 0.34em;
-    text-transform: uppercase;
-    color: var(--orange-deep);
-  }
-
-  h1 {
-    margin: 0;
-    font-size: var(--step-3);
-    font-weight: 800;
-    letter-spacing: -0.045em;
-    line-height: 0.92;
-    text-wrap: balance;
-    max-width: 16ch;
-  }
-  h1 em {
-    font-style: normal;
-    color: var(--orange-deep);
-  }
-
-  .lede {
-    font-family: var(--display);
-    font-size: var(--step-0);
-    letter-spacing: 0;
-    line-height: 1.5;
-    color: var(--ink-soft);
-  }
-
-  /* The basket is layered: back shell -> items well -> front weave band,
-     so vials genuinely sit *inside* the basket rather than on top of it. */
-  .basket {
-    position: relative;
-    width: clamp(170px, min(27vw, 32vh), 340px);
-    aspect-ratio: 1 / 0.86;
-    flex: none;
-  }
-  .basket svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  .basket .shell  { z-index: 1; }
-  .basket .well   { z-index: 2; }
-  .basket .facade { z-index: 3; pointer-events: none; }
-
-  .basket.jolt { animation: jolt 480ms cubic-bezier(.3,1.5,.4,1); }
+  .basket.jolt { animation: jolt 520ms cubic-bezier(.3,1.5,.4,1); }
   @keyframes jolt {
-    30% { transform: translateY(5px) scale(1.045, 0.955); }
-    60% { transform: translateY(-2px) scale(0.985, 1.015); }
+    30% { transform: translateX(-50%) translateY(4px) scale(1.028, 0.972); }
+    65% { transform: translateX(-50%) translateY(-2px) scale(0.99, 1.01); }
   }
 
   .well {
+    /* the basket interior: vials stand on the base and rise past the rim */
     position: absolute;
-    left: 16%;
-    right: 16%;
-    top: 20%;
-    height: 30%;
+    left: 20%;
+    right: 20%;
+    bottom: 16%;
+    height: 50%;
     z-index: 2;
   }
   .well .slot {
     position: absolute;
     bottom: 0;
-    width: 26%;
-    aspect-ratio: 1 / 2.35;
+    width: 22%;
+    height: 100%;
     transform-origin: 50% 100%;
   }
-  .well .slot svg { position: static; width: 100%; height: 100%; }
+  .well .slot svg { width: 100%; height: 100%; display: block; }
   .well .slot.landing { animation: land 460ms cubic-bezier(.25,1.5,.45,1); }
   @keyframes land {
-    0%   { transform: var(--rest) scale(0.82); }
-    55%  { transform: var(--rest) scale(1.07); }
+    0%   { transform: var(--rest) scale(0.84); }
+    55%  { transform: var(--rest) scale(1.06); }
     100% { transform: var(--rest) scale(1); }
   }
 
-  /* ---------- product rail ---------- */
-  .rail {
+  /* ---------- phone ---------- */
+  .phone {
+    position: absolute;
+    left: 50%;
+    top: 40.5%;
+    transform: translateX(-50%);
+    width: 72cqw;
+    height: 68cqh;               /* runs off the bottom edge, as in the reference */
+    background: #FFFFFF;
+    border: 0.9cqw solid #EFE9E1;
+    border-radius: 7cqw 7cqw 0 0;
+    box-shadow: 0 1.4cqw 3.4cqw rgba(58, 42, 30, 0.10);
+    z-index: 2;
+    overflow: hidden;
+  }
+  /* side buttons */
+  .phone::before,
+  .phone::after {
+    content: "";
+    position: absolute;
+    right: -1.3cqw;
+    width: 0.9cqw;
+    border-radius: 0 1cqw 1cqw 0;
+    background: #EFE9E1;
+  }
+  .phone::before { top: 15%; height: 9%; }
+  .phone::after  { top: 27%; height: 5%; }
+
+  .statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.6cqw 4.4cqw 0;
+    font-family: var(--sans);
+    font-size: 2.3cqw;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .island {
+    width: 15cqw;
+    height: 3.4cqw;
+    border-radius: 999px;
+    background: #26201A;
+    position: relative;
+  }
+  .island::after {
+    content: "";
+    position: absolute;
+    right: 1cqw;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.5cqw;
+    height: 1.5cqw;
+    border-radius: 50%;
+    background: #3E362E;
+  }
+  .statusbar .sig { display: flex; align-items: center; gap: 0.8cqw; }
+  .statusbar .sig svg { height: 2.4cqw; width: auto; display: block; }
+
+  /* in-phone header */
+  .appbar {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(0.6rem, 1.4vw, 1.1rem);
-    width: min(1100px, 100%);
-    margin: 0 auto;
-    flex: none;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 2.6cqw 4.4cqw 1.8cqw;
+  }
+  .appbar .icon { width: 4.4cqw; color: var(--ink); }
+  .appbar .icon svg { width: 100%; height: auto; display: block; }
+  .appbar .cart { justify-self: end; }
+
+  /* Placeholder wordmark — swap this <span> for the real DecantX logo. */
+  .logo {
+    font-family: var(--serif);
+    font-size: 4.4cqw;
+    letter-spacing: 0.02em;
+    color: var(--orange-soft);
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .logo em { font-style: italic; }
+
+  .rule {
+    height: 0.28cqw;
+    margin: 0 4.4cqw;
+    background: var(--cream-deep);
+  }
+
+  /* ---------- product grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3.4cqw 3cqw;
+    padding: 3.4cqw 4.4cqw;
   }
 
   .card {
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.55rem;
-    padding: clamp(0.7rem, 1.4vw, 1.1rem) 0.7rem clamp(0.75rem, 1.4vw, 1rem);
-    background: var(--glass);
-    border: 2px solid var(--ink);
-    border-radius: 14px;
-    box-shadow: 0 5px 0 var(--ink);
-    backdrop-filter: blur(6px);
+    gap: 1.5cqw;
+    padding: 0;
+    border: 0;
+    background: none;
     font: inherit;
     color: inherit;
-    text-align: center;
-    transition: transform 180ms ease, box-shadow 180ms ease, filter 420ms ease, opacity 420ms ease;
   }
-  .card:not(.spent):hover,
-  .card:not(.spent):focus-visible {
-    transform: translateY(-4px);
-    box-shadow: 0 9px 0 var(--ink);
-  }
-  .card:focus-visible { outline: 3px solid var(--orange-deep); outline-offset: 4px; }
-  .card:not(.spent):active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
+  .card:focus-visible { outline: 0.5cqw solid var(--orange-deep); outline-offset: 0.6cqw; }
 
-  .card .vial { width: clamp(38px, min(4.6vw, 7vh), 62px); aspect-ratio: 1 / 2.35; }
-  .card .vial svg { width: 100%; height: 100%; }
+  .tile {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1.16;
+    background: var(--tile);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .tile .vial {
+    width: 36%;
+    transition: opacity 420ms ease, filter 420ms ease;
+  }
+  .tile .vial svg { width: 100%; height: auto; display: block; }
 
-  .brand {
-    font-family: var(--label);
-    font-size: var(--step--1);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-  }
-  .name {
-    font-size: var(--step-1);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.05;
-    text-wrap: balance;
-  }
-  .meta {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    margin-top: auto; /* keeps prices on a line when brand names wrap */
-    font-family: var(--label);
-    font-size: var(--step--1);
-    letter-spacing: 0.06em;
-    color: var(--ink-soft);
-  }
-  .price { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
-
-  /* spent state */
-  .card.spent {
-    filter: grayscale(1);
-    opacity: 0.42;
-    box-shadow: 0 2px 0 var(--ink);
-    transform: none;
-    cursor: default;
-  }
-  .card.spent .stamp { opacity: 1; transform: translate(-50%, -50%) rotate(-9deg) scale(1); }
-
-  .stamp {
+  /* "ADDED TO CART" sits at the top of the tile, per the reference */
+  .tile .added {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-9deg) scale(1.5);
-    opacity: 0;
-    transition: opacity 260ms ease, transform 380ms cubic-bezier(.2,1.5,.4,1);
-    font-family: var(--label);
-    font-size: clamp(0.62rem, 0.5rem + 0.42vw, 0.86rem);
-    font-weight: 700;
-    letter-spacing: 0.14em;
+    top: 7%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 2.1cqw;
+    font-style: italic;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    white-space: nowrap;
-    color: var(--ink);
-    background: rgba(255, 241, 222, 0.9);
-    border: 3px solid var(--ink);
-    border-radius: 6px;
-    padding: 0.42em 0.7em;
+    color: var(--ink-soft);
+    opacity: 0;
+    transition: opacity 300ms ease 120ms;
     pointer-events: none;
   }
+
+  .cta {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 2.7cqw;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--orange-deep);
+    transition: color 420ms ease;
+  }
+
+  .card:not(.spent):hover .tile .vial { transform: scale(1.04); }
+  .tile .vial { transition: opacity 420ms ease, filter 420ms ease, transform 260ms ease; }
+
+  /* spent state: product ghosts out, label pales, "ADDED TO CART" appears */
+  .card.spent .tile .vial { opacity: 0.26; filter: grayscale(0.55); }
+  .card.spent .tile .added { opacity: 1; }
+  .card.spent .cta { color: var(--orange-pale); }
 
   /* the vial in flight, basket-bound */
   .flier {
@@ -337,63 +290,54 @@
     pointer-events: none;
     will-change: transform;
   }
-  .flier svg { width: 100%; height: 100%; }
+  .flier svg { width: 100%; height: 100%; display: block; }
 
-  /* ---------- footer ---------- */
-  .footnote {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    font-family: var(--label);
-    font-size: var(--step--1);
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    text-align: center;
-  }
+  /* ---------- reset ---------- */
   .reset {
-    font: inherit;
-    letter-spacing: 0.16em;
+    position: absolute;
+    right: 3cqw;
+    top: 2.6cqw;
+    z-index: 8;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.9cqw;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--ink);
+    color: var(--ink-soft);
     background: transparent;
-    border: 2px solid var(--ink);
+    border: 0.18cqw solid var(--orange-pale);
     border-radius: 999px;
-    padding: 0.4em 1em;
-    box-shadow: 0 3px 0 var(--ink);
-    transition: transform 140ms ease, box-shadow 140ms ease;
+    padding: 0.5cqw 1.4cqw;
+    opacity: 0.4;
+    transition: opacity 180ms ease, border-color 180ms ease;
   }
-  .reset:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--ink); }
-  .reset:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
-  .reset:focus-visible { outline: 3px solid var(--orange-deep); outline-offset: 3px; }
+  .reset:hover { opacity: 1; border-color: var(--orange-soft); }
+  .reset:focus-visible { outline: 0.4cqw solid var(--orange-deep); outline-offset: 0.4cqw; }
 
   /* ---------- oversized 8-bit cursor ---------- */
-  /* Only on true pointer devices; touch and keyboard users keep the native one. */
   @media (hover: hover) and (pointer: fine) {
-    body.cursor-on,
-    body.cursor-on * { cursor: none !important; }
+    body.cursor-on, body.cursor-on * { cursor: none !important; }
   }
   #cursor {
     position: fixed;
     top: 0;
     left: 0;
-    width: 112px;
+    width: 104px;
     z-index: 90;
     pointer-events: none;
     opacity: 0;
     transition: opacity 160ms ease;
-    /* hotspot: the fingertip. 15-wide grid in a 17-wide viewBox at 112px
-       => 6.6px per pixel; fingertip centre sits 6.5 pixels in, 1 pixel down. */
-    margin: -7px 0 0 -43px;
-    filter: drop-shadow(0 6px 0 rgba(217, 62, 0, 0.32));
+    /* hotspot: the fingertip. 15-wide grid in a 17-wide viewBox at 104px
+       => 6.1px per pixel; the fingertip centre is 6.5 px in and 1 px down. */
+    margin: -6px 0 0 -40px;
+    filter: drop-shadow(0 5px 0 rgba(210, 105, 30, 0.28));
     will-change: transform;
   }
   #cursor.ready { opacity: 1; }
   #cursor svg { display: block; width: 100%; height: auto; }
   #cursor .sprite { transition: transform 90ms cubic-bezier(.3,1.4,.4,1); transform-origin: 38% 5%; }
   #cursor.down .sprite { transform: scale(0.86) translate(2px, 3px); }
-  #cursor.over .sprite { transform: scale(1.06) rotate(-4deg); }
+  #cursor.over .sprite { transform: scale(1.07) rotate(-4deg); }
   #cursor.over.down .sprite { transform: scale(0.9) rotate(-4deg) translate(2px, 3px); }
 
   .sr-only {
@@ -406,10 +350,7 @@
     border: 0;
   }
 
-  /* ---------- responsive ---------- */
-  @media (max-width: 780px) {
-    .rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .basket { width: clamp(190px, 54vw, 260px); }
+  @media (hover: none), (pointer: coarse) {
     #cursor { display: none; }
   }
 
@@ -423,95 +364,46 @@
 </style>
 </head>
 <body>
-<div class="backdrop" aria-hidden="true"></div>
 
-<main class="stage">
-  <header class="masthead">
-    <!-- Placeholder wordmark: replace with the real DecantX logo asset. -->
-    <a class="wordmark" href="https://www.decantx.com/" target="_blank" rel="noopener">
-      <b>Decant</b><span class="x">X</span>
-      <small>Hand-decanted samples</small>
-    </a>
+<div class="poster" id="poster">
+  <h1 class="title">PAYDAY <em>ESSENTIALS</em></h1>
 
-    <p class="counter" id="counter">
-      Basket
-      <span class="n" id="count">0</span>
-    </p>
-  </header>
+  <button class="reset" id="reset" type="button">Reset</button>
 
-  <section class="hero">
-    <p class="kicker">Pick four · try before the full bottle</p>
-    <h1>Tap a vial. Watch it <em>drop in</em>.</h1>
+  <!-- wire basket: back wires, then the items well, then front wires -->
+  <div class="basket" id="basket">
+    <svg class="wire-back"  id="wireBack"  viewBox="0 0 400 250" aria-hidden="true"></svg>
+    <div class="well" id="well"></div>
+    <svg class="wire-front" id="wireFront" viewBox="0 0 400 250" aria-hidden="true"></svg>
+  </div>
 
-    <div class="basket" id="basket">
-      <svg class="shell" viewBox="0 0 300 258" aria-hidden="true">
-        <defs>
-          <linearGradient id="weave" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#FF8A3D"/>
-            <stop offset="1" stop-color="#D93E00"/>
-          </linearGradient>
-          <clipPath id="bodyClip">
-            <path d="M40 88 H260 L236 226 A14 14 0 0 1 222 238 H78 A14 14 0 0 1 64 226 Z"/>
-          </clipPath>
-        </defs>
-
-        <!-- basket body -->
-        <path d="M40 88 H260 L236 226 A14 14 0 0 1 222 238 H78 A14 14 0 0 1 64 226 Z"
-              fill="url(#weave)" stroke="#2B1607" stroke-width="6" stroke-linejoin="round"/>
-
-        <!-- woven texture -->
-        <g clip-path="url(#bodyClip)" opacity="0.5">
-          <g stroke="#8A2600" stroke-width="4">
-            <path d="M44 118 H256"/><path d="M48 148 H252"/>
-            <path d="M52 178 H248"/><path d="M56 208 H244"/>
-          </g>
-          <g stroke="#FFC98A" stroke-width="3" opacity="0.75">
-            <path d="M70 88 L62 238"/><path d="M110 88 L106 238"/>
-            <path d="M150 88 L150 238"/><path d="M190 88 L194 238"/>
-            <path d="M230 88 L238 238"/>
-          </g>
-        </g>
-
-        <!-- mouth: basket interior, drawn behind the vials. Weave carries
-             around the inside so it reads as a basket, not a hole. -->
-        <defs>
-          <clipPath id="mouthClip"><ellipse cx="150" cy="88" rx="110" ry="24"/></clipPath>
-        </defs>
-        <ellipse cx="150" cy="88" rx="110" ry="24" fill="#A83100"/>
-        <g clip-path="url(#mouthClip)">
-          <ellipse cx="150" cy="72" rx="104" ry="20" fill="#C24100"/>
-          <g stroke="#8A2600" stroke-width="3" opacity=".55">
-            <path d="M62 88 L70 66"/><path d="M106 96 L108 66"/>
-            <path d="M150 98 L150 64"/><path d="M194 96 L192 66"/>
-            <path d="M238 88 L230 66"/>
-          </g>
-        </g>
-        <ellipse cx="150" cy="88" rx="110" ry="24" fill="none" stroke="#2B1607" stroke-width="6"/>
-      </svg>
-
-      <div class="well" id="well"></div>
-
-      <svg class="facade" viewBox="0 0 300 258" aria-hidden="true">
-        <!-- front lip: overlaps the vials so they read as sitting *in* the basket -->
-        <path d="M40 88 A110 24 0 0 0 260 88 L256 110 A110 24 0 0 1 44 110 Z"
-              fill="#FF8A3D" stroke="#2B1607" stroke-width="6" stroke-linejoin="round"/>
-        <g stroke="#8A2600" stroke-width="3.5" opacity="0.55">
-          <path d="M78 104 L77 96"/><path d="M110 110 L109 101"/>
-          <path d="M150 112 L150 103"/><path d="M190 110 L191 101"/>
-          <path d="M222 104 L223 96"/>
-        </g>
-      </svg>
+  <!-- phone mockup -->
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="island"></span>
+      <span class="sig">
+        <svg viewBox="0 0 20 14" fill="currentColor" aria-hidden="true"><rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="8" rx="1"/><rect x="10" y="3" width="3" height="11" rx="1"/><rect x="15" y="0" width="3" height="14" rx="1"/></svg>
+        <svg viewBox="0 0 18 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M1 5a12 12 0 0 1 16 0"/><path d="M4 8.4a7.5 7.5 0 0 1 10 0"/><circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+        <svg viewBox="0 0 26 13" fill="none" aria-hidden="true"><rect x="0.8" y="0.8" width="21" height="11.4" rx="3" stroke="currentColor" stroke-width="1.4"/><rect x="2.6" y="2.6" width="17.4" height="7.8" rx="1.6" fill="currentColor"/><path d="M23.6 4.6v3.8a2.4 2.4 0 0 0 0-3.8z" fill="currentColor"/></svg>
+      </span>
     </div>
 
-  </section>
+    <div class="appbar">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 22 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1 1.5h20M1 8h20M1 14.5h20"/></svg>
+      </span>
+      <!-- Placeholder wordmark: replace with the real DecantX logo asset. -->
+      <span class="logo">DECANT<em>X</em></span>
+      <span class="icon cart" aria-hidden="true">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1.6h3.1l2.6 12.1h10.4l2.3-8.6H5.6"/><circle cx="8.4" cy="19" r="1.7"/><circle cx="16.4" cy="19" r="1.7"/></svg>
+      </span>
+    </div>
+    <div class="rule"></div>
 
-  <section class="rail" id="rail" aria-label="Products"></section>
-
-  <footer class="footnote">
-    <span class="lede">Decanted into 2&nbsp;ml glass atomizers — about 30 sprays each.</span>
-    <button class="reset" id="reset" type="button">Empty basket</button>
-  </footer>
-</main>
+    <div class="grid" id="grid" aria-label="Products"></div>
+  </div>
+</div>
 
 <div id="cursor" aria-hidden="true"></div>
 <p class="sr-only" id="live" role="status" aria-live="polite"></p>
@@ -522,83 +414,125 @@
 
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* ----------------------------------------------------------
-     Products — real DecantX listings. Prices are the brand's
-     2 ml price points on decantx.com.
-     ---------------------------------------------------------- */
+  /* Real DecantX listings, at the brand's 2 ml price points. */
   var PRODUCTS = [
-    { brand: "Creed",                     name: "Aventus",         conc: "EDP",  price: "$11.79", juice: "#7A4A22", cap: "#C9CDD2", url: "https://www.decantx.com/products/creed-aventus-eau-de-parfum-for-men" },
-    { brand: "Parfums de Marly",          name: "Layton",          conc: "EDP",  price: "$9.79",  juice: "#D9A441", cap: "#E7C77A", url: "https://www.decantx.com/products/parfums-de-marly-layton-eau-de-parfum-for-men" },
-    { brand: "Maison Francis Kurkdjian",  name: "Baccarat Rouge 540", conc: "EDP", price: "$9.89", juice: "#C43A4E", cap: "#E0B4B0", url: "https://www.decantx.com/products/maison-francis-kurkdjian-baccarat-rouge-540-eau-de-parfum-unisex" },
-    { brand: "Parfums de Marly",          name: "Layton Exclusif", conc: "EDP",  price: "$9.79",  juice: "#8C5A1E", cap: "#E7C77A", url: "https://www.decantx.com/products/parfums-de-marly-layton-exclusif-eau-de-parfum-for-men" }
+    { brand: "Creed",                    name: "Aventus",            juice: "#8A5A2B", cap: "#D8DCE0" },
+    { brand: "Parfums de Marly",         name: "Layton",             juice: "#D9A441", cap: "#EBD298" },
+    { brand: "Maison Francis Kurkdjian", name: "Baccarat Rouge 540", juice: "#C8546A", cap: "#E9C2BE" },
+    { brand: "Parfums de Marly",         name: "Layton Exclusif",    juice: "#96601F", cap: "#EBD298" }
   ];
 
   /* ----------------------------------------------------------
-     Vial artwork. A DecantX decant is a small glass atomizer,
-     so that — not a replica of the house's own flacon — is what
-     ships in the basket. Transparent background by construction.
+     Wire basket, generated rather than hand-authored so the
+     mesh stays adjustable. Back half of every hoop goes behind
+     the vials, front half in front — that's what sells "inside".
      ---------------------------------------------------------- */
-  function vialSVG(p, i) {
-    var gid = "g" + i, jid = "j" + i;
+  /* The basket is a rectangular frustum. Corners, front (near) and
+     back (far) rings — everything else is interpolated from these. */
+  var TLb = [58, 100],  TRb = [342, 100];   // back rim
+  var TL  = [24, 142],  TR  = [376, 142];   // front rim
+  var BLb = [92, 200],  BRb = [308, 200];   // back base
+  var BL  = [66, 236],  BR  = [334, 236];   // front base
+
+  function lerp(p, q, t) { return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]; }
+  function line(p, q) {
+    return '<path d="M' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) +
+           ' L' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + '"/>';
+  }
+
+  /* Wire mesh across a quad, corners given clockwise from top-left. */
+  function mesh(a, b, c, d, nv, nh) {
+    var out = [], i;
+    for (i = 0; i <= nv; i++) out.push(line(lerp(a, b, i / nv), lerp(d, c, i / nv)));
+    for (i = 0; i <= nh; i++) out.push(line(lerp(a, d, i / nh), lerp(b, c, i / nh)));
+    return out.join("");
+  }
+
+  function quad(a, b, c, d) {
+    return '<path d="M' + a + ' L' + b + ' L' + c + ' L' + d + ' Z"/>';
+  }
+
+  function buildBasket() {
+    var wire  = 'fill="none" stroke="var(--orange)" stroke-width="3" stroke-linecap="round"';
+    var frame = 'fill="none" stroke="var(--orange)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"';
+
+    // BACK: far wall seen through the mesh, far rim edge, and the two
+    // folding handles — handles belong behind the vials, or they read
+    // as tangled over them.
+    var back =
+      '<g ' + wire + ' opacity=".35">' + mesh(TLb, TRb, BRb, BLb, 11, 3) + '</g>' +
+      '<g ' + frame + ' opacity=".55">' + line(TLb, TRb) + line(BLb, BRb) + '</g>' +
+      // each handle is a strap hinged on one side, swinging up and across
+      // so the two cross near the apex
+      '<g ' + wire + ' stroke-width="4" stroke-linejoin="round">' +
+        '<path d="M144 144 C138 86 166 38 202 28 L210 42 C180 52 158 96 160 144 Z"/>' +
+        '<path d="M256 144 C262 86 234 38 198 28 L190 42 C220 52 242 96 240 144 Z"/>' +
+      '</g>';
+
+    // FRONT: near wall + both side walls + rim opening + base + handles
+    var front =
+      '<g ' + wire + '>' +
+        mesh(TL, TR, BR, BL, 13, 3) +          // front wall
+        mesh(TLb, TL, BL, BLb, 3, 3) +         // left wall
+        mesh(TRb, TR, BR, BRb, 3, 3) +         // right wall
+      '</g>' +
+      '<g ' + frame + '>' +
+        quad(TLb, TRb, TR, TL) +               // the mouth
+        quad(TL, TR, BR, BL) +                 // front wall frame
+        line(BL, BLb) + line(BR, BRb) +
+      '</g>';
+
+    document.getElementById("wireBack").innerHTML = back;
+    document.getElementById("wireFront").innerHTML = front;
+  }
+  buildBasket();
+
+  /* ----------------------------------------------------------
+     Vial artwork — a DecantX decant is a small glass atomizer,
+     so that is what ships in the basket. Transparent by build.
+     ---------------------------------------------------------- */
+  function vialSVG(p, key) {
+    var g = "g" + key, j = "j" + key, c = "c" + key;
     return '' +
       '<svg viewBox="0 0 60 141" xmlns="http://www.w3.org/2000/svg">' +
         '<defs>' +
-          '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0" stop-color="#ffffff" stop-opacity=".85"/>' +
-            '<stop offset=".38" stop-color="#ffffff" stop-opacity=".16"/>' +
-            '<stop offset="1" stop-color="#2B1607" stop-opacity=".18"/>' +
+          '<linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0" stop-color="#fff" stop-opacity=".9"/>' +
+            '<stop offset=".38" stop-color="#fff" stop-opacity=".18"/>' +
+            '<stop offset="1" stop-color="#3A2A1E" stop-opacity=".14"/>' +
           '</linearGradient>' +
-          '<linearGradient id="' + jid + '" x1="0" y1="0" x2="1" y2="0">' +
+          '<linearGradient id="' + j + '" x1="0" y1="0" x2="1" y2="0">' +
             '<stop offset="0" stop-color="' + p.juice + '" stop-opacity=".72"/>' +
             '<stop offset=".45" stop-color="' + p.juice + '"/>' +
-            '<stop offset="1" stop-color="' + p.juice + '" stop-opacity=".78"/>' +
+            '<stop offset="1" stop-color="' + p.juice + '" stop-opacity=".8"/>' +
           '</linearGradient>' +
-          '<clipPath id="c' + i + '">' +
-            '<rect x="11" y="40" width="38" height="94" rx="8"/>' +
-          '</clipPath>' +
+          '<clipPath id="' + c + '"><rect x="11" y="40" width="38" height="94" rx="8"/></clipPath>' +
         '</defs>' +
-
-        /* spray actuator */
-        '<rect x="22" y="4"  width="16" height="13" rx="3" fill="' + p.cap + '" stroke="#2B1607" stroke-width="3"/>' +
-        '<rect x="18" y="15" width="24" height="10" rx="3" fill="' + p.cap + '" stroke="#2B1607" stroke-width="3"/>' +
-        /* collar */
-        '<rect x="16" y="25" width="28" height="9" rx="2.5" fill="#EFE3D2" stroke="#2B1607" stroke-width="3"/>' +
-        /* neck */
-        '<rect x="20" y="33" width="20" height="9" fill="#F7EFE2" stroke="#2B1607" stroke-width="3"/>' +
-
-        /* glass body */
-        '<rect x="11" y="40" width="38" height="94" rx="8" fill="#FFFFFF" fill-opacity=".30" stroke="#2B1607" stroke-width="3"/>' +
-        /* juice */
-        '<g clip-path="url(#c' + i + ')">' +
-          '<rect x="11" y="62" width="38" height="72" fill="url(#' + jid + ')"/>' +
+        '<rect x="22" y="4"  width="16" height="13" rx="3" fill="' + p.cap + '" stroke="#3A2A1E" stroke-width="2.4"/>' +
+        '<rect x="18" y="15" width="24" height="10" rx="3" fill="' + p.cap + '" stroke="#3A2A1E" stroke-width="2.4"/>' +
+        '<rect x="16" y="25" width="28" height="9" rx="2.5" fill="#F3EAE0" stroke="#3A2A1E" stroke-width="2.4"/>' +
+        '<rect x="20" y="33" width="20" height="9" fill="#F9F3EB" stroke="#3A2A1E" stroke-width="2.4"/>' +
+        '<rect x="11" y="40" width="38" height="94" rx="8" fill="#fff" fill-opacity=".34" stroke="#3A2A1E" stroke-width="2.4"/>' +
+        '<g clip-path="url(#' + c + ')">' +
+          '<rect x="11" y="62" width="38" height="72" fill="url(#' + j + ')"/>' +
           '<ellipse cx="30" cy="62" rx="19" ry="4.5" fill="' + p.juice + '" fill-opacity=".55"/>' +
-          /* dip tube */
-          '<rect x="28" y="46" width="4" height="80" rx="2" fill="#2B1607" fill-opacity=".22"/>' +
+          '<rect x="28" y="46" width="4" height="80" rx="2" fill="#3A2A1E" fill-opacity=".2"/>' +
         '</g>' +
-        /* glass sheen */
-        '<rect x="11" y="40" width="38" height="94" rx="8" fill="url(#' + gid + ')"/>' +
-        '<rect x="16" y="48" width="5" height="60" rx="2.5" fill="#FFFFFF" fill-opacity=".55"/>' +
-
-        /* label band */
-        '<rect x="8" y="86" width="44" height="30" rx="3" fill="#FFF6EA" stroke="#2B1607" stroke-width="3"/>' +
-        '<rect x="12" y="92" width="36" height="3.4" rx="1.7" fill="#2B1607" fill-opacity=".68"/>' +
-        '<rect x="12" y="99" width="26" height="3" rx="1.5" fill="#2B1607" fill-opacity=".38"/>' +
-        '<rect x="12" y="105" width="31" height="3" rx="1.5" fill="#2B1607" fill-opacity=".26"/>' +
-        /* accent tick — the one spot of brand orange on the vial */
-        '<rect x="12" y="110.5" width="9" height="3" rx="1.5" fill="#FF6A13"/>' +
-
-        '<rect x="11" y="40" width="38" height="94" rx="8" fill="none" stroke="#2B1607" stroke-width="3"/>' +
+        '<rect x="11" y="40" width="38" height="94" rx="8" fill="url(#' + g + ')"/>' +
+        '<rect x="16" y="48" width="5" height="58" rx="2.5" fill="#fff" fill-opacity=".6"/>' +
+        '<rect x="8" y="86" width="44" height="30" rx="3" fill="#FDF8F2" stroke="#3A2A1E" stroke-width="2.4"/>' +
+        '<rect x="12" y="92"   width="36" height="3.2" rx="1.6" fill="#3A2A1E" fill-opacity=".62"/>' +
+        '<rect x="12" y="98.6" width="26" height="2.8" rx="1.4" fill="#3A2A1E" fill-opacity=".34"/>' +
+        '<rect x="12" y="104.6" width="31" height="2.8" rx="1.4" fill="#3A2A1E" fill-opacity=".24"/>' +
+        '<rect x="12" y="110.2" width="9"  height="2.8" rx="1.4" fill="#D2691E"/>' +
+        '<rect x="11" y="40" width="38" height="94" rx="8" fill="none" stroke="#3A2A1E" stroke-width="2.4"/>' +
       '</svg>';
   }
 
-  /* ----------------------------------------------------------
-     Build the product rail
-     ---------------------------------------------------------- */
-  var rail = document.getElementById("rail");
+  /* ---------- build the 2x2 grid inside the phone ---------- */
+  var grid = document.getElementById("grid");
   var well = document.getElementById("well");
   var basket = document.getElementById("basket");
-  var countEl = document.getElementById("count");
-  var counterEl = document.getElementById("counter");
   var liveEl = document.getElementById("live");
 
   PRODUCTS.forEach(function (p, i) {
@@ -606,36 +540,32 @@
     card.type = "button";
     card.className = "card";
     card.dataset.index = String(i);
-    card.setAttribute("aria-label", "Add " + p.brand + " " + p.name + ", " + p.price + ", to basket");
+    card.setAttribute("aria-label", "Add " + p.brand + " " + p.name + " to cart");
     card.innerHTML =
-      '<span class="vial">' + vialSVG(p, i) + '</span>' +
-      '<span class="brand">' + p.brand + '</span>' +
-      '<span class="name">' + p.name + '</span>' +
-      '<span class="meta"><span class="price">' + p.price + '</span><span>' + p.conc + ' · 2 ml</span></span>' +
-      '<span class="stamp">Added to cart</span>';
-    rail.appendChild(card);
+      '<span class="tile">' +
+        '<span class="added">Added to cart</span>' +
+        '<span class="vial">' + vialSVG(p, i) + '</span>' +
+      '</span>' +
+      '<span class="cta">Add to cart</span>';
+    grid.appendChild(card);
   });
 
-  /* ----------------------------------------------------------
-     Add to basket
-     ---------------------------------------------------------- */
+  /* ---------- add to basket ---------- */
   var added = 0;
 
-  function slotTransform(n) {
-    // fan the vials across the mouth of the basket, back row first
-    var lean = [-9, -3, 4, 10][n % 4];
-    var lift = [0, -4, -2, -6][n % 4];
+  function rest(n) {
+    var lean = [-7, -2, 3, 8][n % 4];
+    var lift = [0, -3, -1, -4][n % 4];
     return "rotate(" + lean + "deg) translateY(" + lift + "px)";
   }
 
   function place(i) {
-    var p = PRODUCTS[i];
     var slot = document.createElement("span");
     slot.className = "slot";
-    slot.innerHTML = vialSVG(p, "b" + i);
-    slot.style.left = (4 + added * 22) + "%";
-    slot.style.setProperty("--rest", slotTransform(added));
-    slot.style.transform = slotTransform(added);
+    slot.innerHTML = vialSVG(PRODUCTS[i], "b" + i);
+    slot.style.left = (4 + added * 23) + "%";
+    slot.style.setProperty("--rest", rest(added));
+    slot.style.transform = rest(added);
     slot.style.zIndex = String(10 - added);
     well.appendChild(slot);
     return slot;
@@ -643,10 +573,6 @@
 
   function announce(p) {
     added += 1;
-    countEl.textContent = String(added);
-    counterEl.classList.remove("bump");
-    void counterEl.offsetWidth;
-    counterEl.classList.add("bump");
     liveEl.textContent = p.brand + " " + p.name + " added to cart. " +
       (added === 1 ? "1 vial in the basket." : added + " vials in the basket.");
   }
@@ -662,12 +588,8 @@
 
     var slot = place(i);
 
-    if (reduced) {
-      announce(p);
-      return;
-    }
+    if (reduced) { announce(p); return; }
 
-    // hide the landed vial until the flier arrives
     slot.style.visibility = "hidden";
 
     var from = card.querySelector(".vial").getBoundingClientRect();
@@ -685,16 +607,13 @@
     var dx = (to.left + to.width / 2) - (from.left + from.width / 2);
     var dy = (to.top + to.height / 2) - (from.top + from.height / 2);
     var scale = to.width / from.width;
-    var apexY = dy * 0.35 - Math.max(90, Math.abs(dy) * 0.42);
+    var apexY = dy * 0.42 - Math.max(60, Math.abs(dy) * 0.3);
 
-    var anim = flier.animate(
-      [
-        { transform: "translate(0px, 0px) scale(1) rotate(0deg)", opacity: 1 },
-        { transform: "translate(" + dx * 0.5 + "px, " + apexY + "px) scale(" + (1.14 * (1 + scale) / 2 + 0.1) + ") rotate(-14deg)", offset: 0.5, opacity: 1 },
-        { transform: "translate(" + dx + "px, " + dy + "px) scale(" + scale + ") rotate(6deg)", opacity: 1 }
-      ],
-      { duration: 720, easing: "cubic-bezier(.42,0,.3,1)", fill: "forwards" }
-    );
+    var anim = flier.animate([
+      { transform: "translate(0,0) scale(1) rotate(0deg)" },
+      { transform: "translate(" + (dx * 0.52) + "px," + apexY + "px) scale(" + (1 + scale) / 2 * 1.1 + ") rotate(-11deg)", offset: 0.52 },
+      { transform: "translate(" + dx + "px," + dy + "px) scale(" + scale + ") rotate(4deg)" }
+    ], { duration: 760, easing: "cubic-bezier(.42,0,.3,1)", fill: "forwards" });
 
     anim.finished.then(function () {
       flier.remove();
@@ -711,7 +630,7 @@
     });
   }
 
-  rail.addEventListener("click", function (e) {
+  grid.addEventListener("click", function (e) {
     var card = e.target.closest(".card");
     if (card) addToCart(card);
   });
@@ -719,20 +638,17 @@
   document.getElementById("reset").addEventListener("click", function () {
     added = 0;
     well.innerHTML = "";
-    countEl.textContent = "0";
     liveEl.textContent = "Basket emptied.";
-    Array.prototype.forEach.call(rail.querySelectorAll(".card"), function (card) {
+    Array.prototype.forEach.call(grid.querySelectorAll(".card"), function (card) {
       card.classList.remove("spent");
       card.disabled = false;
       var p = PRODUCTS[Number(card.dataset.index)];
-      card.setAttribute("aria-label", "Add " + p.brand + " " + p.name + ", " + p.price + ", to basket");
+      card.setAttribute("aria-label", "Add " + p.brand + " " + p.name + " to cart");
     });
   });
 
   /* ----------------------------------------------------------
-     Oversized 8-bit pointing hand
-     Drawn from a pixel map rather than hand-authored path data,
-     so the sprite stays editable.
+     Oversized 8-bit pointing hand, drawn from a pixel map
      ---------------------------------------------------------- */
   var HAND = [
     "....OOOO.......",
@@ -755,7 +671,7 @@
     "...OWWWWWWWWO..",
     "...OOOOOOOOOO.."
   ];
-  var PAINT = { O: "#FF6A13", W: "#FFF6EA", s: "#FFB03A" };
+  var PAINT = { O: "#EA8B45", W: "#FFFFFF" };
 
   function handSVG() {
     var w = HAND[0].length, h = HAND.length, px = [];
@@ -766,57 +682,44 @@
         px.push('<rect x="' + x + '" y="' + y + '" width="1.02" height="1.02" fill="' + PAINT[ch] + '"/>');
       }
     }
-    // A second, offset pass in the deep orange reads as the outline's own shadow.
+    var body = px.join("");
     return '<svg viewBox="-1 -1 ' + (w + 2) + ' ' + (h + 2) + '" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">' +
              '<g class="sprite">' +
-               '<g transform="translate(0.55,0.55)" opacity=".45">' +
-                 px.join("").replace(/fill="#FFF6EA"/g, 'fill="#D93E00"').replace(/fill="#FF6A13"/g, 'fill="#D93E00"') +
-               '</g>' +
-               px.join("") +
-             '</g>' +
-           '</svg>';
+               '<g transform="translate(0.5,0.5)" opacity=".4">' +
+                 body.replace(/fill="#FFFFFF"/g, 'fill="#D2691E"').replace(/fill="#EA8B45"/g, 'fill="#D2691E"') +
+               '</g>' + body +
+             '</g></svg>';
   }
 
   var cursor = document.getElementById("cursor");
-  var fine = window.matchMedia("(hover: hover) and (pointer: fine)");
-
-  if (fine.matches) {
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
     cursor.innerHTML = handSVG();
     document.body.classList.add("cursor-on");
 
-    var tx = window.innerWidth / 2, ty = window.innerHeight / 2;
-    var cx = tx, cy = ty, raf = 0;
-
-    function loop() {
-      // a touch of lag gives the sprite weight without feeling laggy to click
-      cx += (tx - cx) * 0.38;
-      cy += (ty - cy) * 0.38;
+    var tx = innerWidth / 2, ty = innerHeight / 2, cx = tx, cy = ty;
+    (function loop() {
+      cx += (tx - cx) * 0.4;
+      cy += (ty - cy) * 0.4;
       cursor.style.transform = "translate3d(" + cx + "px," + cy + "px,0)";
-      raf = requestAnimationFrame(loop);
-    }
-    raf = requestAnimationFrame(loop);
+      requestAnimationFrame(loop);
+    })();
 
-    window.addEventListener("pointermove", function (e) {
+    addEventListener("pointermove", function (e) {
       if (e.pointerType !== "mouse") return;
-      tx = e.clientX;
-      ty = e.clientY;
+      tx = e.clientX; ty = e.clientY;
       cursor.classList.add("ready");
     }, { passive: true });
-
-    window.addEventListener("pointerdown", function () { cursor.classList.add("down"); }, { passive: true });
-    window.addEventListener("pointerup", function () { cursor.classList.remove("down"); }, { passive: true });
+    addEventListener("pointerdown", function () { cursor.classList.add("down"); }, { passive: true });
+    addEventListener("pointerup", function () { cursor.classList.remove("down"); }, { passive: true });
     document.addEventListener("mouseleave", function () { cursor.classList.remove("ready"); });
-
     document.addEventListener("pointerover", function (e) {
-      var hot = e.target.closest(".card:not(.spent), .reset, a");
-      cursor.classList.toggle("over", !!hot);
+      cursor.classList.toggle("over", !!e.target.closest(".card:not(.spent), .reset"));
     }, { passive: true });
   }
 
-  // keep the basket contents aligned if the viewport changes mid-scene
-  window.addEventListener("resize", function () {
+  addEventListener("resize", function () {
     Array.prototype.forEach.call(well.querySelectorAll(".slot"), function (slot, n) {
-      slot.style.left = (4 + n * 22) + "%";
+      slot.style.left = (4 + n * 23) + "%";
     });
   }, { passive: true });
 })();
