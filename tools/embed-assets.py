@@ -52,7 +52,16 @@ for key, name in FILES.items():
 
 block = json.dumps(data, separators=(",", ":"))
 
-FONT = os.path.join(ASSETS, "fonts", "poppins-700-subset.woff2")
+FONT_DIR = os.path.join(ASSETS, "fonts")
+
+# (file, weight, style) — subset to the glyphs the page actually renders
+FONTS = [
+    ("poppins-400.woff2",  400, "normal"),
+    ("poppins-400i.woff2", 400, "italic"),
+    ("poppins-600.woff2",  600, "normal"),
+    ("poppins-700.woff2",  700, "normal"),
+    ("poppins-700i.woff2", 700, "italic"),
+]
 
 html = open(PAGE, encoding="utf-8").read()
 new, n = re.subn(
@@ -64,13 +73,22 @@ new, n = re.subn(
 if n != 1:
     raise SystemExit("could not find the asset-data block in index.html")
 
-font_raw = open(FONT, "rb").read()
-if font_raw[:4] != b"wOF2":
-    raise SystemExit(f"{FONT} is not a woff2")
-font_uri = "data:font/woff2;base64," + base64.b64encode(font_raw).decode("ascii")
+faces, font_bytes = [], 0
+for fname, weight, style in FONTS:
+    fpath = os.path.join(FONT_DIR, fname)
+    raw = open(fpath, "rb").read()
+    if raw[:4] != b"wOF2":
+        raise SystemExit(f"{fpath} is not a woff2")
+    font_bytes += len(raw)
+    uri = "data:font/woff2;base64," + base64.b64encode(raw).decode("ascii")
+    faces.append(
+        '@font-face{font-family:"Poppins";font-style:%s;font-weight:%d;'
+        'font-display:swap;src:url(%s) format("woff2")}' % (style, weight, uri)
+    )
+
 new, fn = re.subn(
     r"(/\* poppins:start \*/).*?(/\* poppins:end \*/)",
-    lambda m: m.group(1) + 'src: url(' + font_uri + ') format("woff2");' + m.group(2),
+    lambda m: m.group(1) + "".join(faces) + m.group(2),
     new,
     flags=re.S,
 )
@@ -78,5 +96,5 @@ if fn != 1:
     raise SystemExit("could not find the poppins marker block in index.html")
 
 open(PAGE, "w", encoding="utf-8").write(new)
-print(f"embedded {len(FILES)} assets + Poppins ({len(font_raw)} B) -> "
-      f"{len(block)/1024:.0f} KB of JSON, page is now {len(new)/1024:.0f} KB")
+print(f"embedded {len(FILES)} assets + {len(FONTS)} Poppins faces "
+      f"({font_bytes/1024:.1f} KB) -> page is now {len(new)/1024:.0f} KB")
