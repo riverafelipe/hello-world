@@ -30,6 +30,17 @@
     color-scheme: only light;
   }
 
+  /* Poppins Bold, subset to just the title's glyphs and inlined by
+     tools/embed-assets.py — the artifact CSP blocks font CDNs, so a linked
+     webfont would silently fall back. */
+  @font-face {
+    font-family: "Poppins";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    /* poppins:start */src: url(data:font/woff2;base64,d09GMgABAAAAAAQ4AAwAAAAAB2QAAAPrAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGx4cLgZgAGwKhVCEOgsaAAE2AiQDMAQgBYNEByAb3wXIxIfezXozCZbUJTVTuttg2lUVzh16Kl/IiRvEikv1S8O8wJEHsdSbTe9aKrViEQ1g7O3nKXlLApJ58AAFXDOMXVzGEggADmmMDentHxWhBAuSlyQ7WsKlGAycTZo1e0014rDgCJce1bRnmfnUDRlAD1A9To64c8SKajKOKkpo/go8PST2q3ENgpDMpoRuYBa7lK4UgJOwR8vpsxjCKEwRM7ARB2Ze/TiwgK/GIAoMKAR0oQejUEMDg5A8p4O0MtNV+kR6VnpGelx6VHpYeuCjX3s5qyEMIanvABReLJGcGjIL2WxGBATUDes5liFfrmTS5FFhkaoSZZyKlYWzYQvDNHqddjYjGrTiVJjI2XgLpzXq3wsE+IM+DXevnzvgxTYffzBQwXu93AG/n+h4hMn4T/x+sj0Q4A/6fNjm9XKBANlecS3cyFFOFn4w+w3RMIc/+DTZPs1xPr9fy1/2RH2v1fuLZPsYxpVpwd16U+PrymEtOJaTccRGBx4RhqfbeC+YtXpwxMgbTDZez7l/d/9+c794R+jlkjtCd4SOBkN3hA4G/yR+3Sgv2vhQ0PNS0POIRtJCAwgvG25cM87Z/MDO9OXukdGyKrVjsdnsWKyuGi0bcacvf2DH5jnXjIbr8/D1zo93HZy+C/lyl8numjvXftNlmppymaw35861uW6apiYvzlpqtsxaImpmLbZaZi3RwHVcWaS6azpzclVT06z2/vHFownX4zduX1DxQ3HhDxUL8KN8fdWgg/Q+Wv92Xv6DmSlZeT/0xGmK2mZ0Ow8vWbHq8BLW+US0PzdzIjP7j574ngSxqE3d0drqWNmkRr1n/5N1d9U9uR9feFwdbT2trR09Ha67blrV2/d0TU7u6BzZYb2Js55ffV/f9fWvvuf25u3JwyzPfUv5lQDeyyOWyEunVIW2yNY/lAzzdV7/bdcdr7iu7yXUvxp8K3hDdQ8rgkBxn8MtIvfesupy8K1/klT33EgzjPzupRegnyCK/oss8gHamRhk0UNop3NRTNVIos+ihV6FgjSjqrW1MBxDGFZB3heYMetKzHlFOVbFtm7AHRJBBO4lCiVuJQb1WEYskqAnGTiMkxxJqOcI5j4wD6uwCsuwEs2oQAWzPIUVmI9lWCWb5VjJi+Bnl2IF5qICavRjFBNYimVYhvlYgpUoQzeWYhFmoRblqEQlOFGqC782BBH9UKMFAhvKP+il40SjdKI2emJYP1fMXcVAQDUqzdsEiJiH2SPwBFpcigWYjanai11YjVWYt7pQ2eXC/WjMxXzZeTWcKMcUlmIxKtK1OVjKzi7BLKzAenhiHBT9hEH+qvQIqr8v) format("woff2");/* poppins:end */
+  }
+
   * { box-sizing: border-box; }
   html, body { height: 100%; }
 
@@ -62,15 +73,14 @@
     right: 0;
     margin: 0;
     text-align: center;
-    font-family: var(--serif);
-    font-size: 7.4cqw;
-    font-weight: 400;
+    font-family: "Poppins", var(--sans);
+    font-size: 6.3cqw;
+    font-weight: 700;
     line-height: 1;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.01em;
     color: var(--orange-soft);
     white-space: nowrap;
   }
-  .title em { font-style: italic; letter-spacing: 0.02em; }
 
   /* ---------- wire basket ---------- */
   .basket {
@@ -385,7 +395,7 @@
 <body>
 
 <div class="poster" id="poster">
-  <h1 class="title">PAYDAY <em>ESSENTIALS</em></h1>
+  <h1 class="title">YOUR CART’S LAST CALL</h1>
 
   <button class="reset" id="reset" type="button">Reset</button>
 

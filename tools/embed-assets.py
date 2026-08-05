@@ -52,6 +52,8 @@ for key, name in FILES.items():
 
 block = json.dumps(data, separators=(",", ":"))
 
+FONT = os.path.join(ASSETS, "fonts", "poppins-700-subset.woff2")
+
 html = open(PAGE, encoding="utf-8").read()
 new, n = re.subn(
     r'(<script id="asset-data" type="application/json">).*?(</script>)',
@@ -62,6 +64,19 @@ new, n = re.subn(
 if n != 1:
     raise SystemExit("could not find the asset-data block in index.html")
 
+font_raw = open(FONT, "rb").read()
+if font_raw[:4] != b"wOF2":
+    raise SystemExit(f"{FONT} is not a woff2")
+font_uri = "data:font/woff2;base64," + base64.b64encode(font_raw).decode("ascii")
+new, fn = re.subn(
+    r"(/\* poppins:start \*/).*?(/\* poppins:end \*/)",
+    lambda m: m.group(1) + 'src: url(' + font_uri + ') format("woff2");' + m.group(2),
+    new,
+    flags=re.S,
+)
+if fn != 1:
+    raise SystemExit("could not find the poppins marker block in index.html")
+
 open(PAGE, "w", encoding="utf-8").write(new)
-print(f"embedded {len(FILES)} assets -> {len(block)/1024:.0f} KB of JSON, "
-      f"page is now {len(new)/1024:.0f} KB")
+print(f"embedded {len(FILES)} assets + Poppins ({len(font_raw)} B) -> "
+      f"{len(block)/1024:.0f} KB of JSON, page is now {len(new)/1024:.0f} KB")
