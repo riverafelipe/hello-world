@@ -34,6 +34,11 @@ FILES = {
     "atomNavy":  "atomizer-navy.png",
     "atomPink":  "atomizer-pink.png",
     "atomRed":   "atomizer-red.png",
+    # v3's unbranded flacons ship as SVG, drawn by tools/make-generic-bottles.py
+    "bFlacon":  "bottle-flacon.svg",
+    "bCube":    "bottle-cube.svg",
+    "bOval":    "bottle-oval.svg",
+    "bColumn":  "bottle-column.svg",
 }
 
 
@@ -41,6 +46,21 @@ def png_size(raw):
     if raw[:8] != b"\x89PNG\r\n\x1a\n":
         raise SystemExit("not a PNG")
     return struct.unpack(">II", raw[16:24])
+
+
+def asset_uri(path, raw):
+    """PNG or SVG -> (data URI, width, height)."""
+    if path.endswith(".svg"):
+        txt = raw.decode("utf-8")
+        m = re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', txt)
+        if not m:
+            raise SystemExit(f"{path}: no viewBox to size from")
+        w, h = (round(float(m.group(1))), round(float(m.group(2))))
+        mime = "image/svg+xml"
+    else:
+        w, h = png_size(raw)
+        mime = "image/png"
+    return "data:%s;base64,%s" % (mime, base64.b64encode(raw).decode("ascii")), w, h
 
 
 page_src = open(PAGE, encoding="utf-8").read()
@@ -56,12 +76,8 @@ for key, name in USED.items():
     if not os.path.exists(path):
         raise SystemExit(f"missing asset: {path}")
     raw = open(path, "rb").read()
-    w, h = png_size(raw)
-    data[key] = {
-        "src": "data:image/png;base64," + base64.b64encode(raw).decode("ascii"),
-        "w": w,
-        "h": h,
-    }
+    uri, w, h = asset_uri(path, raw)
+    data[key] = {"src": uri, "w": w, "h": h}
 
 block = json.dumps(data, separators=(",", ":"))
 
