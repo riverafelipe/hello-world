@@ -83,13 +83,14 @@ block = json.dumps(data, separators=(",", ":"))
 
 FONT_DIR = os.path.join(ASSETS, "fonts")
 
-# (file, weight, style) — subset to the glyphs the page actually renders
+# (file, weight, style) — subset to the glyphs the page actually renders.
+# Keep in step with FACES in tools/fetch-fonts.py.
 FONTS = [
     ("poppins-400.woff2",  400, "normal"),
     ("poppins-400i.woff2", 400, "italic"),
     ("poppins-600.woff2",  600, "normal"),
-    ("poppins-700.woff2",  700, "normal"),
     ("poppins-700i.woff2", 700, "italic"),
+    ("poppins-900.woff2",  900, "normal"),
 ]
 
 html = open(PAGE, encoding="utf-8").read()
