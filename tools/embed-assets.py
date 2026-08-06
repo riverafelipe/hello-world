@@ -34,11 +34,11 @@ FILES = {
     "atomNavy":  "atomizer-navy.png",
     "atomPink":  "atomizer-pink.png",
     "atomRed":   "atomizer-red.png",
-    # v3's unbranded flacons ship as SVG, drawn by tools/make-generic-bottles.py
-    "bFlacon":  "bottle-flacon.svg",
-    "bCube":    "bottle-cube.svg",
-    "bOval":    "bottle-oval.svg",
-    "bColumn":  "bottle-column.svg",
+    # v3's unbranded flacons: photographic, supplied pre-cut
+    "pSmoked":  "photo-bottle-smoked.png",
+    "pNavy":    "photo-bottle-navy.png",
+    "pOval":    "photo-bottle-oval.png",
+    "pAmber":   "photo-bottle-amber.png",
 }
 
 

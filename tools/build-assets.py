@@ -348,3 +348,11 @@ def cutout_atomizer(path, out_name, t=22, min_run=8, margin=40,
 print("\natomizers:")
 for name in ("black", "gold", "navy", "pink", "red"):
     cutout_atomizer(f"{UP}/atomizer-{name}.png", f"atomizer-{name}.png")
+
+
+# v3's photographic flacons. These arrive already cut out, so cutout() detects
+# the existing alpha and only crops and scales - re-keying would wreck them.
+print("\nphotographic flacons:")
+for name in ("smoked", "oval", "navy", "amber"):
+    cutout(f"{UP}/bottle-{name}.png", f"photo-bottle-{name}.png",
+           thresh=30, max_side=560)
