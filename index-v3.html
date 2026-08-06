@@ -14,7 +14,7 @@
   :root,
   :root[data-theme="dark"],
   :root[data-theme="light"] {
-    --cream:       #FAF3EB;  /* the poster ground */
+    --cream:       #FAF3EB;  /* the poster ground, and the page around it */
     --cream-deep:  #F2E7DA;
     --tile:        #F1ECE5;  /* product tile fill inside the phone */
     --orange-pale: #F7CDA8;  /* spent / greyed-out state */
@@ -39,7 +39,9 @@
 
   body {
     margin: 0;
-    background: var(--cream-deep);
+    /* Same cream as the poster, so the letterboxing either side of the 9:16
+       frame reads as one continuous ground instead of a visible border. */
+    background: var(--cream);
     color: var(--ink);
     font-family: var(--sans);
     display: grid;
@@ -344,11 +346,19 @@
     border: 0.18cqw solid var(--orange-pale);
     border-radius: 999px;
     padding: 0.5cqw 1.4cqw;
-    opacity: 0.4;
-    transition: opacity 180ms ease, border-color 180ms ease;
+    /* Invisible, but still a real button. opacity:0 keeps it laid out and
+       hit-testable, which visibility:hidden and display:none would not — the
+       corner stays clickable, there is just nothing to see. Focus is the one
+       state allowed to reveal it, so the control is still reachable by anyone
+       tabbing rather than clicking. */
+    opacity: 0;
+    transition: opacity 180ms ease;
   }
-  .reset:hover { opacity: 1; border-color: var(--orange-soft); }
-  .reset:focus-visible { outline: 0.4cqw solid var(--orange-deep); outline-offset: 0.4cqw; }
+  .reset:focus-visible {
+    opacity: 1;
+    outline: 0.4cqw solid var(--orange-deep);
+    outline-offset: 0.4cqw;
+  }
 
   /* ---------- oversized 8-bit cursor ---------- */
   @media (hover: hover) and (pointer: fine) {
